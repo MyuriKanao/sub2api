@@ -1610,7 +1610,9 @@ export default {
         openai: 'OpenAI',
         gemini: 'Gemini',
         antigravity: 'Antigravity',
-        sora: 'Sora'
+        sora: 'Sora',
+        grok: 'Grok',
+        'gemini-e': 'Gemini E'
       },
       deleteConfirm:
         "Are you sure you want to delete '{name}'? All associated API keys will no longer belong to any group.",
@@ -1923,7 +1925,9 @@ export default {
         openai: 'OpenAI',
         gemini: 'Gemini',
         antigravity: 'Antigravity',
-        sora: 'Sora'
+        sora: 'Sora',
+        grok: 'Grok',
+        'gemini-e': 'Gemini E'
       },
       types: {
         oauth: 'OAuth',

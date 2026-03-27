@@ -309,6 +309,32 @@ const loadAvailableModels = async () => {
     return
   }
 
+  if (props.account.platform === 'grok') {
+    availableModels.value = [
+      { id: 'grok-3', display_name: 'Grok 3', created_at: '' },
+      { id: 'grok-3-auto', display_name: 'Grok 3 Auto', created_at: '' },
+      { id: 'grok-3-fast', display_name: 'Grok 3 Fast', created_at: '' },
+      { id: 'grok-4', display_name: 'Grok 4', created_at: '' },
+      { id: 'grok-4-mini-thinking', display_name: 'Grok 4 Mini Thinking', created_at: '' },
+      { id: 'grok-4-mini-thinking-tahoe', display_name: 'Grok 4 Mini Thinking Tahoe', created_at: '' },
+    ] as any
+    selectedModelId.value = 'grok-3'
+    loadingModels.value = false
+    return
+  }
+
+  if (props.account.platform === 'gemini-e') {
+    availableModels.value = [
+      { id: 'gemini-3.1-pro-preview', display_name: 'Gemini 3.1 Pro', created_at: '' },
+      { id: 'gemini-3-flash-preview', display_name: 'Gemini 3 Flash', created_at: '' },
+      { id: 'gemini-2.5-pro', display_name: 'Gemini 2.5 Pro', created_at: '' },
+      { id: 'gemini-2.5-flash', display_name: 'Gemini 2.5 Flash', created_at: '' },
+    ] as any
+    selectedModelId.value = 'gemini-3.1-pro-preview'
+    loadingModels.value = false
+    return
+  }
+
   loadingModels.value = true
   selectedModelId.value = '' // Reset selection before loading
   try {

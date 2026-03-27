@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"time"
@@ -203,6 +204,87 @@ func (h *GatewayHandler) ChatCompletions(c *gin.Context) {
 
 		// 5. Forward request
 		writerSizeBeforeForward := c.Writer.Size()
+
+		// Grok: use dedicated gateway service
+		if account.Platform == service.PlatformGrok {
+			if accountReleaseFunc != nil {
+				accountReleaseFunc()
+			}
+			grokResult, grokErr := h.grokGatewayService.Forward(c.Request.Context(), c, account, body)
+			if grokErr == nil && grokResult != nil && grokResult.Response != nil {
+				defer grokResult.Response.Body.Close()
+				isStream := true
+				var streamCheck struct{ Stream *bool `json:"stream"` }
+				if json.Unmarshal(body, &streamCheck) == nil && streamCheck.Stream != nil {
+					isStream = *streamCheck.Stream
+				}
+				requestedModel := ""
+				var modelCheck struct{ Model string `json:"model"` }
+				if json.Unmarshal(body, &modelCheck) == nil {
+					requestedModel = modelCheck.Model
+				}
+				if isStream {
+					c.Writer.Header().Set("Content-Type", "text/event-stream")
+					c.Writer.Header().Set("Cache-Control", "no-cache")
+					c.Writer.Header().Set("Connection", "keep-alive")
+					c.Writer.WriteHeader(200)
+					service.TransformGrokStreamToOpenAISSE(grokResult.Response.Body, c.Writer, requestedModel)
+					c.Writer.Flush()
+				} else {
+					respBytes, transformErr := service.TransformGrokToOpenAINonStream(grokResult.Response.Body, requestedModel)
+					if transformErr != nil {
+						h.errorResponse(c, 502, "server_error", "grok response transform failed")
+					} else {
+						c.Data(200, "application/json", respBytes)
+					}
+				}
+				return
+			}
+			h.ensureForwardErrorResponse(c, streamStarted)
+			reqLog.Error("gateway.cc.grok_forward_failed", zap.Int64("account_id", account.ID), zap.Error(grokErr))
+			return
+		}
+
+		// Gemini-E (Business): use dedicated gateway service
+		if account.Platform == service.PlatformGeminiE {
+			if accountReleaseFunc != nil {
+				accountReleaseFunc()
+			}
+			geminiEResult, geminiEErr := h.geminiEGatewayService.Forward(c.Request.Context(), c, account, body)
+			if geminiEErr == nil && geminiEResult != nil && geminiEResult.Response != nil {
+				defer geminiEResult.Response.Body.Close()
+				isStream := true
+				var streamCheck struct{ Stream *bool `json:"stream"` }
+				if json.Unmarshal(body, &streamCheck) == nil && streamCheck.Stream != nil {
+					isStream = *streamCheck.Stream
+				}
+				requestedModel := ""
+				var modelCheck struct{ Model string `json:"model"` }
+				if json.Unmarshal(body, &modelCheck) == nil {
+					requestedModel = modelCheck.Model
+				}
+				if isStream {
+					c.Writer.Header().Set("Content-Type", "text/event-stream")
+					c.Writer.Header().Set("Cache-Control", "no-cache")
+					c.Writer.Header().Set("Connection", "keep-alive")
+					c.Writer.WriteHeader(200)
+					service.TransformGeminiEStreamToOpenAISSE(geminiEResult.Response.Body, c.Writer, requestedModel)
+					c.Writer.Flush()
+				} else {
+					respBytes, transformErr := service.TransformGeminiEToOpenAINonStream(geminiEResult.Response.Body, requestedModel)
+					if transformErr != nil {
+						h.errorResponse(c, 502, "server_error", "gemini-e response transform failed")
+					} else {
+						c.Data(200, "application/json", respBytes)
+					}
+				}
+				return
+			}
+			h.ensureForwardErrorResponse(c, streamStarted)
+			reqLog.Error("gateway.cc.gemini_e_forward_failed", zap.Int64("account_id", account.ID), zap.Error(geminiEErr))
+			return
+		}
+
 		result, err := h.gatewayService.ForwardAsChatCompletions(c.Request.Context(), c, account, body, parsedReq)
 
 		if accountReleaseFunc != nil {

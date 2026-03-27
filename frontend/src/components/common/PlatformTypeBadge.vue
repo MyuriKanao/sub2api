@@ -71,6 +71,8 @@ const platformLabel = computed(() => {
   if (props.platform === 'openai') return 'OpenAI'
   if (props.platform === 'antigravity') return 'Antigravity'
   if (props.platform === 'sora') return 'Sora'
+  if (props.platform === 'grok') return 'Grok'
+  if (props.platform === 'gemini-e') return 'Gemini E'
   return 'Gemini'
 })
 
@@ -84,6 +86,8 @@ const typeLabel = computed(() => {
       return 'Key'
     case 'bedrock':
       return 'AWS'
+    case 'cookie':
+      return 'SSO'
     default:
       return props.type
   }
@@ -122,6 +126,12 @@ const platformClass = computed(() => {
   if (props.platform === 'sora') {
     return 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
   }
+  if (props.platform === 'grok') {
+    return 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400'
+  }
+  if (props.platform === 'gemini-e') {
+    return 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
+  }
   return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
 })
 
@@ -137,6 +147,12 @@ const typeClass = computed(() => {
   }
   if (props.platform === 'sora') {
     return 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400'
+  }
+  if (props.platform === 'grok') {
+    return 'bg-cyan-100 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400'
+  }
+  if (props.platform === 'gemini-e') {
+    return 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400'
   }
   return 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
 })

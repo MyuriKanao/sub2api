@@ -784,6 +784,46 @@ func (a *Account) IsAPIKeyOrBedrock() bool {
 	return a.Type == AccountTypeAPIKey || a.Type == AccountTypeBedrock
 }
 
+func (a *Account) IsGrok() bool {
+	return a.Platform == PlatformGrok
+}
+
+func (a *Account) IsCookie() bool {
+	return a.Type == AccountTypeCookie
+}
+
+func (a *Account) GetSSOToken() string {
+	if !a.IsGrok() {
+		return ""
+	}
+	return a.GetCredential("sso_token")
+}
+
+func (a *Account) GetSSOEmail() string {
+	if !a.IsGrok() {
+		return ""
+	}
+	return a.GetCredential("email")
+}
+
+func (a *Account) IsGeminiE() bool {
+	return a.Platform == PlatformGeminiE
+}
+
+func (a *Account) GetGeminiECSES() string {
+	if !a.IsGeminiE() {
+		return ""
+	}
+	return a.GetCredential("c_ses")
+}
+
+func (a *Account) GetGeminiECOSES() string {
+	if !a.IsGeminiE() {
+		return ""
+	}
+	return a.GetCredential("c_oses")
+}
+
 func (a *Account) IsOpenAI() bool {
 	return a.Platform == PlatformOpenAI
 }

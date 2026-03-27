@@ -68,6 +68,7 @@ type AccountTestService struct {
 	accountRepo               AccountRepository
 	geminiTokenProvider       *GeminiTokenProvider
 	antigravityGatewayService *AntigravityGatewayService
+	geminiEGatewayService     *GeminiEGatewayService
 	httpUpstream              HTTPUpstream
 	cfg                       *config.Config
 	tlsFPProfileService       *TLSFingerprintProfileService
@@ -83,6 +84,7 @@ func NewAccountTestService(
 	accountRepo AccountRepository,
 	geminiTokenProvider *GeminiTokenProvider,
 	antigravityGatewayService *AntigravityGatewayService,
+	geminiEGatewayService *GeminiEGatewayService,
 	httpUpstream HTTPUpstream,
 	cfg *config.Config,
 	tlsFPProfileService *TLSFingerprintProfileService,
@@ -91,6 +93,7 @@ func NewAccountTestService(
 		accountRepo:               accountRepo,
 		geminiTokenProvider:       geminiTokenProvider,
 		antigravityGatewayService: antigravityGatewayService,
+		geminiEGatewayService:     geminiEGatewayService,
 		httpUpstream:              httpUpstream,
 		cfg:                       cfg,
 		tlsFPProfileService:       tlsFPProfileService,
@@ -199,6 +202,14 @@ func (s *AccountTestService) TestAccountConnection(c *gin.Context, accountID int
 
 	if account.Platform == PlatformSora {
 		return s.testSoraAccountConnection(c, account)
+	}
+
+	if account.Platform == PlatformGrok {
+		return s.testGrokAccountConnection(c, account, modelID)
+	}
+
+	if account.Platform == PlatformGeminiE {
+		return s.testGeminiEAccountConnection(c, account, modelID)
 	}
 
 	return s.testClaudeAccountConnection(c, account, modelID)
@@ -1744,6 +1755,107 @@ func (s *AccountTestService) processOpenAIStream(c *gin.Context, body io.Reader)
 	}
 }
 
+// testGrokAccountConnection tests a Grok cookie account by making a real API call
+func (s *AccountTestService) testGrokAccountConnection(c *gin.Context, account *Account, modelID string) error {
+	testModelID := modelID
+	if testModelID == "" {
+		testModelID = "grok-3"
+	}
+
+	// SSE headers
+	c.Writer.Header().Set("Content-Type", "text/event-stream")
+	c.Writer.Header().Set("Cache-Control", "no-cache")
+	c.Writer.Header().Set("Connection", "keep-alive")
+	c.Writer.Header().Set("X-Accel-Buffering", "no")
+	c.Writer.Flush()
+
+	s.sendEvent(c, TestEvent{Type: "test_start", Model: testModelID})
+
+	ssoToken := account.GetSSOToken()
+	if ssoToken == "" {
+		return s.sendErrorAndEnd(c, "No SSO token found in credentials")
+	}
+
+	// Build Grok request
+	grokModelName := testModelID
+	grokModelMode := "MODEL_MODE_AUTO"
+	switch testModelID {
+	case "grok-3", "grok-3-auto":
+		grokModelName = "grok-3-auto"
+	case "grok-3-fast":
+		grokModelMode = "MODEL_MODE_FAST"
+	case "grok-4":
+		grokModelMode = "MODEL_MODE_EXPERT"
+	case "grok-4-mini-thinking":
+		grokModelName = "grok-4-mini-thinking-tahoe"
+		grokModelMode = "MODEL_MODE_GROK_4_MINI_THINKING"
+	}
+
+	payload := map[string]any{
+		"temporary": true, "modelName": grokModelName, "message": "Say hi",
+		"modelMode": grokModelMode, "disableSearch": true, "disableMemory": true,
+		"fileAttachments": []any{}, "imageAttachments": []any{},
+		"enableImageGeneration": false, "enableImageStreaming": false,
+		"enableSideBySide": false, "forceConcise": true, "forceSideBySide": false,
+		"imageGenerationCount": 0, "isAsyncChat": false, "isReasoning": false,
+		"returnImageBytes": false, "returnRawGrokInXaiRequest": false,
+		"sendFinalMetadata": true, "toolOverrides": map[string]any{},
+		"disableTextFollowUps": true, "webpageUrls": []any{},
+		"responseMetadata": map[string]any{"requestModelDetails": map[string]any{"modelId": grokModelName}},
+	}
+
+	payloadBytes, _ := json.Marshal(payload)
+
+	req, err := http.NewRequestWithContext(c.Request.Context(), "POST",
+		"https://grok.com/rest/app-chat/conversations/new", bytes.NewReader(payloadBytes))
+	if err != nil {
+		return s.sendErrorAndEnd(c, fmt.Sprintf("Build request failed: %s", err))
+	}
+
+	// Headers
+	req.Header = buildGrokHeaders(ssoToken)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return s.sendErrorAndEnd(c, fmt.Sprintf("Connection failed: %s", err))
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 500))
+		return s.sendErrorAndEnd(c, fmt.Sprintf("Grok returned %d: %s", resp.StatusCode, string(body)))
+	}
+
+	// Read response and extract text
+	var fullText string
+	scanner := bufio.NewScanner(resp.Body)
+	scanner.Buffer(make([]byte, 0, 64*1024), 256*1024)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+		var result map[string]any
+		if json.Unmarshal([]byte(line), &result) != nil {
+			continue
+		}
+		if r, ok := result["result"].(map[string]any); ok {
+			if resp, ok := r["response"].(map[string]any); ok {
+				if token, ok := resp["token"].(string); ok && token != "" {
+					fullText += token
+				}
+			}
+		}
+	}
+
+	if fullText == "" {
+		fullText = "(empty response)"
+	}
+	s.sendEvent(c, TestEvent{Type: "content", Text: fullText})
+	s.sendEvent(c, TestEvent{Type: "test_complete", Success: true})
+	return nil
+}
+
 // sendEvent sends a SSE event to the client
 func (s *AccountTestService) sendEvent(c *gin.Context, event TestEvent) {
 	eventJSON, _ := json.Marshal(event)
@@ -1818,4 +1930,128 @@ func parseTestSSEOutput(body string) (responseText, errMsg string) {
 	}
 	responseText = strings.Join(texts, "")
 	return
+}
+
+// testGeminiEAccountConnection tests a Gemini Business (Enterprise) cookie account
+// by actually sending a chat message via widgetStreamAssist.
+func (s *AccountTestService) testGeminiEAccountConnection(c *gin.Context, account *Account, modelID string) error {
+	testModelID := modelID
+	if testModelID == "" {
+		testModelID = "gemini-3.1-pro-preview"
+	}
+
+	c.Writer.Header().Set("Content-Type", "text/event-stream")
+	c.Writer.Header().Set("Cache-Control", "no-cache")
+	c.Writer.Header().Set("Connection", "keep-alive")
+	c.Writer.Header().Set("X-Accel-Buffering", "no")
+	c.Writer.Flush()
+
+	s.sendEvent(c, TestEvent{Type: "test_start", Model: testModelID})
+
+	csesidx := account.GetCredential("csesidx")
+	configID := account.GetCredential("config_id")
+	cSes := account.GetCredential("c_ses")
+	cOses := account.GetCredential("c_oses")
+
+	if csesidx == "" || configID == "" || (cSes == "" && cOses == "") {
+		return s.sendErrorAndEnd(c, "Missing csesidx, config_id or C_SES/C_OSES cookies")
+	}
+
+	// Step 1: Get XSRF token
+	s.sendEvent(c, TestEvent{Type: "content", Text: "Validating session..."})
+
+	xsrfURL := fmt.Sprintf("https://business.gemini.google/auth/getoxsrf?csesidx=%s", csesidx)
+	xsrfReq, err := http.NewRequestWithContext(c.Request.Context(), "GET", xsrfURL, nil)
+	if err != nil {
+		return s.sendErrorAndEnd(c, fmt.Sprintf("Build xsrf request failed: %s", err))
+	}
+	var cookieParts []string
+	if cSes != "" {
+		cookieParts = append(cookieParts, fmt.Sprintf("__Secure-C_SES=%s", cSes))
+	}
+	if cOses != "" {
+		cookieParts = append(cookieParts, fmt.Sprintf("__Host-C_OSES=%s", cOses))
+	}
+	xsrfReq.Header.Set("Cookie", strings.Join(cookieParts, "; "))
+	xsrfReq.Header.Set("User-Agent", geminiEUserAgent)
+
+	xsrfResp, err := http.DefaultClient.Do(xsrfReq)
+	if err != nil {
+		return s.sendErrorAndEnd(c, fmt.Sprintf("XSRF request failed: %s", err))
+	}
+	defer xsrfResp.Body.Close()
+	xsrfBody, _ := io.ReadAll(io.LimitReader(xsrfResp.Body, 4096))
+
+	if xsrfResp.StatusCode != 200 {
+		return s.sendErrorAndEnd(c, fmt.Sprintf("Session invalid (HTTP %d)", xsrfResp.StatusCode))
+	}
+
+	// Parse XSRF response
+	xsrfStr := string(xsrfBody)
+	if strings.HasPrefix(xsrfStr, ")]}'") {
+		if idx := strings.Index(xsrfStr, "\n"); idx != -1 {
+			xsrfStr = xsrfStr[idx+1:]
+		}
+	}
+	var xsrfData struct {
+		XSRFToken string `json:"xsrfToken"`
+		KeyID     string `json:"keyId"`
+	}
+	if err := json.Unmarshal([]byte(xsrfStr), &xsrfData); err != nil {
+		return s.sendErrorAndEnd(c, "Failed to parse XSRF token")
+	}
+
+	// Session valid if we got here
+	// Step 2: Test via gateway (reuse the working Forward path)
+	s.sendEvent(c, TestEvent{Type: "content", Text: fmt.Sprintf("Sending test message with model %s...\n", testModelID)})
+
+	// Build an OpenAI-compatible request body
+	testBody, _ := json.Marshal(map[string]interface{}{
+		"model":    testModelID,
+		"messages": []map[string]string{{"role": "user", "content": "Say hi in one sentence"}},
+		"stream":   false,
+	})
+
+	// Use the gateway service to forward (it handles JWT, uToken, everything)
+	if s.geminiEGatewayService == nil {
+		// Fallback: just validate session via getoxsrf
+		s.sendEvent(c, TestEvent{Type: "content", Text: fmt.Sprintf("Session valid. Model: %s (gateway not available for full test)", testModelID)})
+		s.sendEvent(c, TestEvent{Type: "test_complete", Success: true})
+		return nil
+	}
+
+	fwdResult, fwdErr := s.geminiEGatewayService.Forward(c.Request.Context(), c, account, testBody)
+	if fwdErr != nil {
+		return s.sendErrorAndEnd(c, fmt.Sprintf("Gateway forward failed: %s", fwdErr))
+	}
+	if fwdResult == nil || fwdResult.Response == nil {
+		return s.sendErrorAndEnd(c, "Gateway returned nil response")
+	}
+	defer fwdResult.Response.Body.Close()
+
+	// Parse response
+	respBody, _ := io.ReadAll(io.LimitReader(fwdResult.Response.Body, 1024*1024))
+	nonStreamResp, err := TransformGeminiEToOpenAINonStream(bytes.NewReader(respBody), testModelID)
+	if err != nil {
+		s.sendEvent(c, TestEvent{Type: "content", Text: fmt.Sprintf("Response received (%d bytes) but parse failed: %s", len(respBody), err)})
+		s.sendEvent(c, TestEvent{Type: "test_complete", Success: true})
+		return nil
+	}
+
+	var parsed struct {
+		Choices []struct {
+			Message struct {
+				Content string `json:"content"`
+			} `json:"message"`
+		} `json:"choices"`
+	}
+	json.Unmarshal(nonStreamResp, &parsed)
+	result := "(empty)"
+	if len(parsed.Choices) > 0 {
+		result = parsed.Choices[0].Message.Content
+	}
+
+	s.sendEvent(c, TestEvent{Type: "content", Text: result})
+	s.sendEvent(c, TestEvent{Type: "test_complete", Success: true})
+	return nil
 }

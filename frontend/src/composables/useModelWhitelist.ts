@@ -162,6 +162,12 @@ const xaiModels = [
   'grok-beta', 'grok-vision-beta'
 ]
 
+// Gemini Enterprise (Business) - Cookie-based
+const geminiEModels = [
+  'gemini-3.1-pro-preview', 'gemini-3-flash-preview',
+  'gemini-2.5-pro', 'gemini-2.5-flash',
+]
+
 // Cohere
 const cohereModels = [
   'command-a-03-2025',
@@ -243,6 +249,7 @@ const allModelsList: string[] = [
   ...mistralModels,
   ...metaModels,
   ...xaiModels,
+  ...geminiEModels,
   ...cohereModels,
   ...yiModels,
   ...moonshotModels,
@@ -392,7 +399,9 @@ export function getModelsByPlatform(platform: string): string[] {
     case 'deepseek': return deepseekModels
     case 'mistral': return mistralModels
     case 'meta': return metaModels
-    case 'xai': return xaiModels
+    case 'xai':
+    case 'grok': return xaiModels
+    case 'gemini-e': return geminiEModels
     case 'cohere': return cohereModels
     case 'yi': return yiModels
     case 'moonshot': return moonshotModels

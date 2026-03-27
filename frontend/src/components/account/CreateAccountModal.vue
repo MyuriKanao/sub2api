@@ -169,6 +169,84 @@
             <Icon name="cloud" size="sm" />
             Antigravity
           </button>
+          <button
+            type="button"
+            @click="form.platform = 'grok'"
+            :class="[
+              'flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-all',
+              form.platform === 'grok'
+                ? 'bg-white text-cyan-600 shadow-sm dark:bg-dark-600 dark:text-cyan-400'
+                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
+            ]"
+          >
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            Grok
+          </button>
+          <button
+            type="button"
+            @click="form.platform = 'gemini-e'"
+            :class="[
+              'flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-all',
+              form.platform === 'gemini-e'
+                ? 'bg-white text-blue-600 shadow-sm dark:bg-dark-600 dark:text-blue-400'
+                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
+            ]"
+          >
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
+            </svg>
+            Gemini E
+          </button>
+        </div>
+      </div>
+
+      <!-- Account Type Selection (Gemini-E) -->
+      <div v-if="form.platform === 'gemini-e'">
+        <label class="input-label">{{ t('admin.accounts.accountType') }}</label>
+        <div class="mt-2 grid grid-cols-1 gap-3">
+          <button
+            type="button"
+            :class="[
+              'group relative flex items-start gap-3 rounded-xl border-2 p-4 text-left transition-all',
+              'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+            ]"
+          >
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+              </svg>
+            </div>
+            <div>
+              <div class="font-medium text-gray-900 dark:text-gray-100">Cookie (Session)</div>
+              <div class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Gemini Business C_SES/C_OSES Cookie</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Account Type Selection (Grok) -->
+      <div v-if="form.platform === 'grok'">
+        <label class="input-label">{{ t('admin.accounts.accountType') }}</label>
+        <div class="mt-2 grid grid-cols-1 gap-3">
+          <button
+            type="button"
+            :class="[
+              'group relative flex items-start gap-3 rounded-xl border-2 p-4 text-left transition-all',
+              'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+            ]"
+          >
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cyan-100 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+              </svg>
+            </div>
+            <div>
+              <div class="font-medium text-gray-900 dark:text-gray-100">Cookie (SSO)</div>
+              <div class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Grok SSO Cookie</div>
+            </div>
+          </button>
         </div>
       </div>
 
@@ -1308,6 +1386,61 @@
           </div>
         </div>
 
+      </div>
+
+      <!-- Gemini-E (Business) Cookie credentials -->
+      <div v-if="form.platform === 'gemini-e'" class="space-y-4">
+        <div>
+          <label class="input-label">C_SES Cookie *</label>
+          <textarea
+            v-model="geminiECSes"
+            rows="3"
+            required
+            class="input font-mono text-xs"
+            placeholder="__Secure-C_SES cookie value"
+          />
+          <p class="input-hint">从浏览器或注册系统获取的 __Secure-C_SES cookie</p>
+        </div>
+        <div>
+          <label class="input-label">C_OSES Cookie</label>
+          <textarea
+            v-model="geminiECOses"
+            rows="2"
+            class="input font-mono text-xs"
+            placeholder="__Host-C_OSES cookie value (optional)"
+          />
+        </div>
+        <div>
+          <label class="input-label">CSESIDX *</label>
+          <input
+            v-model="geminiECsesidx"
+            type="text"
+            required
+            class="input font-mono"
+            placeholder="e.g. 94029997"
+          />
+          <p class="input-hint">Cloud Session Index</p>
+        </div>
+        <div>
+          <label class="input-label">Config ID *</label>
+          <input
+            v-model="geminiEConfigId"
+            type="text"
+            required
+            class="input font-mono"
+            placeholder="e.g. 0467c362-39b2-449e-b..."
+          />
+          <p class="input-hint">Workspace/Team config ID (cid)</p>
+        </div>
+        <div>
+          <label class="input-label">Email</label>
+          <input
+            v-model="geminiEEmail"
+            type="email"
+            class="input"
+            placeholder="account@example.com (optional)"
+          />
+        </div>
       </div>
 
       <!-- Bedrock credentials (only for Anthropic Bedrock type) -->
@@ -3040,6 +3173,13 @@ const antigravityPresetMappings = computed(() => getPresetMappingsByPlatform('an
 const bedrockPresets = computed(() => getPresetMappingsByPlatform('bedrock'))
 
 // Bedrock credentials
+// Gemini-E (Business) cookie credentials
+const geminiECSes = ref('')
+const geminiECOses = ref('')
+const geminiECsesidx = ref('')
+const geminiEConfigId = ref('')
+const geminiEEmail = ref('')
+
 const bedrockAuthMode = ref<'sigv4' | 'apikey'>('sigv4')
 const bedrockAccessKeyId = ref('')
 const bedrockSecretAccessKey = ref('')
@@ -3285,6 +3425,11 @@ watch(
 watch(
   [accountCategory, addMethod, antigravityAccountType, soraAccountType],
   ([category, method, agType, soraType]) => {
+    // Grok / Gemini-E 固定为 cookie 类型
+    if (form.platform === 'grok' || form.platform === 'gemini-e') {
+      form.type = 'cookie' as AccountType
+      return
+    }
     // Antigravity upstream 类型（实际创建为 apikey）
     if (form.platform === 'antigravity' && agType === 'upstream') {
       form.type = 'apikey'
@@ -3338,6 +3483,12 @@ watch(
       antigravityModelMappings.value = []
       antigravityModelRestrictionMode.value = 'mapping'
     }
+    // Reset Gemini-E fields when switching platforms
+    geminiECSes.value = ''
+    geminiECOses.value = ''
+    geminiECsesidx.value = ''
+    geminiEConfigId.value = ''
+    geminiEEmail.value = ''
     // Reset Bedrock fields when switching platforms
     bedrockAccessKeyId.value = ''
     bedrockSecretAccessKey.value = ''
@@ -3920,6 +4071,45 @@ const handleSubmit = async () => {
       return
     }
     step.value = 2
+    return
+  }
+
+  // For Gemini-E (Business) cookie type, create directly
+  if (form.platform === 'gemini-e') {
+    if (!form.name.trim()) {
+      appStore.showError(t('admin.accounts.pleaseEnterAccountName'))
+      return
+    }
+    if (!geminiECSes.value.trim()) {
+      appStore.showError('Please enter C_SES cookie')
+      return
+    }
+    if (!geminiECsesidx.value.trim()) {
+      appStore.showError('Please enter CSESIDX')
+      return
+    }
+    if (!geminiEConfigId.value.trim()) {
+      appStore.showError('Please enter Config ID')
+      return
+    }
+
+    const credentials: Record<string, unknown> = {
+      c_ses: geminiECSes.value.trim(),
+      c_oses: geminiECOses.value.trim(),
+      csesidx: geminiECsesidx.value.trim(),
+      config_id: geminiEConfigId.value.trim(),
+    }
+    if (geminiEEmail.value.trim()) {
+      credentials.email = geminiEEmail.value.trim()
+    }
+
+    await doCreateAccount({
+      ...form,
+      type: 'cookie',
+      credentials,
+      group_ids: form.group_ids,
+      auto_pause_on_expired: autoPauseOnExpired.value,
+    })
     return
   }
 

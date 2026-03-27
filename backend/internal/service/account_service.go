@@ -394,6 +394,11 @@ func (s *AccountService) TestCredentials(ctx context.Context, id int64) error {
 	case PlatformGemini:
 		// TODO: 测试Gemini API凭证
 		return nil
+	case PlatformGrok:
+		// TODO: 测试Grok SSO凭证有效性
+		return nil
+	case PlatformGeminiE:
+		return nil
 	default:
 		return fmt.Errorf("unsupported platform: %s", account.Platform)
 	}

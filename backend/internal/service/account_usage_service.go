@@ -317,6 +317,11 @@ func (s *AccountUsageService) GetUsage(ctx context.Context, accountID int64) (*U
 		return usage, err
 	}
 
+	// Grok / Gemini-E 平台：从 DB 日志计算 5h/7d 窗口统计（无上游限流数据）
+	if account.Platform == PlatformGrok || account.Platform == PlatformGeminiE {
+		return s.getGrokUsage(ctx, account)
+	}
+
 	// Antigravity 平台：使用 AntigravityQuotaFetcher 获取额度
 	if account.Platform == PlatformAntigravity {
 		usage, err := s.getAntigravityUsage(ctx, account)
@@ -490,6 +495,38 @@ func (s *AccountUsageService) syncActiveToPassive(ctx context.Context, accountID
 			slog.Warn("sync_active_to_passive_failed", "account_id", accountID, "error", err)
 		}
 	}
+}
+
+// getGrokUsage 从 DB 日志计算 Grok 账号的 5h/7d 窗口统计。
+// Grok 没有上游限流 API，utilization 固定为 0，仅展示请求量/token/费用。
+func (s *AccountUsageService) getGrokUsage(ctx context.Context, account *Account) (*UsageInfo, error) {
+	now := time.Now()
+	usage := &UsageInfo{
+		Source:    "active",
+		UpdatedAt: &now,
+	}
+
+	if s.usageLogRepo == nil {
+		return usage, nil
+	}
+
+	// 5h window
+	if stats, err := s.usageLogRepo.GetAccountWindowStats(ctx, account.ID, now.Add(-5*time.Hour)); err == nil {
+		usage.FiveHour = &UsageProgress{
+			Utilization: 0,
+			WindowStats: windowStatsFromAccountStats(stats),
+		}
+	}
+
+	// 7d window
+	if stats, err := s.usageLogRepo.GetAccountWindowStats(ctx, account.ID, now.Add(-7*24*time.Hour)); err == nil {
+		usage.SevenDay = &UsageProgress{
+			Utilization: 0,
+			WindowStats: windowStatsFromAccountStats(stats),
+		}
+	}
+
+	return usage, nil
 }
 
 func (s *AccountUsageService) getOpenAIUsage(ctx context.Context, account *Account) (*UsageInfo, error) {

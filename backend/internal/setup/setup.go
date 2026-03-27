@@ -507,10 +507,14 @@ func generateSecret(length int) (string, error) {
 // Auto Setup for Docker Deployment
 // =============================================================================
 
-// AutoSetupEnabled checks if auto setup is enabled via environment variable
+// AutoSetupEnabled checks if auto setup is enabled via environment variable.
+// Defaults to true for development convenience.
 func AutoSetupEnabled() bool {
 	val := os.Getenv("AUTO_SETUP")
-	return val == "true" || val == "1" || val == "yes"
+	if val == "false" || val == "0" || val == "no" {
+		return false
+	}
+	return true // default: auto setup enabled
 }
 
 // getEnvOrDefault gets environment variable or returns default value
@@ -562,7 +566,7 @@ func AutoSetupFromEnv() error {
 		},
 		Admin: AdminConfig{
 			Email:    getEnvOrDefault("ADMIN_EMAIL", "admin@sub2api.local"),
-			Password: getEnvOrDefault("ADMIN_PASSWORD", ""),
+			Password: getEnvOrDefault("ADMIN_PASSWORD", "admin@sub2api.local"),
 		},
 		Server: ServerConfig{
 			Host: getEnvOrDefault("SERVER_HOST", "0.0.0.0"),
