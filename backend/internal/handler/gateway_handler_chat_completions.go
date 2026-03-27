@@ -228,7 +228,7 @@ func (h *GatewayHandler) ChatCompletions(c *gin.Context) {
 					c.Writer.Header().Set("Cache-Control", "no-cache")
 					c.Writer.Header().Set("Connection", "keep-alive")
 					c.Writer.WriteHeader(200)
-					service.TransformGrokStreamToOpenAISSE(grokResult.Response.Body, c.Writer, requestedModel)
+					_ = service.TransformGrokStreamToOpenAISSE(grokResult.Response.Body, c.Writer, requestedModel)
 					c.Writer.Flush()
 				} else {
 					respBytes, transformErr := service.TransformGrokToOpenAINonStream(grokResult.Response.Body, requestedModel)
@@ -268,7 +268,7 @@ func (h *GatewayHandler) ChatCompletions(c *gin.Context) {
 					c.Writer.Header().Set("Cache-Control", "no-cache")
 					c.Writer.Header().Set("Connection", "keep-alive")
 					c.Writer.WriteHeader(200)
-					service.TransformGeminiEStreamToOpenAISSE(geminiEResult.Response.Body, c.Writer, requestedModel)
+					_ = service.TransformGeminiEStreamToOpenAISSE(geminiEResult.Response.Body, c.Writer, requestedModel)
 					c.Writer.Flush()
 				} else {
 					respBytes, transformErr := service.TransformGeminiEToOpenAINonStream(geminiEResult.Response.Body, requestedModel)

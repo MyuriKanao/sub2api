@@ -1819,7 +1819,7 @@ func (s *AccountTestService) testGrokAccountConnection(c *gin.Context, account *
 	if err != nil {
 		return s.sendErrorAndEnd(c, fmt.Sprintf("Connection failed: %s", err))
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != 200 {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 500))
@@ -1979,7 +1979,7 @@ func (s *AccountTestService) testGeminiEAccountConnection(c *gin.Context, accoun
 	if err != nil {
 		return s.sendErrorAndEnd(c, fmt.Sprintf("XSRF request failed: %s", err))
 	}
-	defer xsrfResp.Body.Close()
+	defer func() { _ = xsrfResp.Body.Close() }()
 	xsrfBody, _ := io.ReadAll(io.LimitReader(xsrfResp.Body, 4096))
 
 	if xsrfResp.StatusCode != 200 {
@@ -2027,7 +2027,7 @@ func (s *AccountTestService) testGeminiEAccountConnection(c *gin.Context, accoun
 	if fwdResult == nil || fwdResult.Response == nil {
 		return s.sendErrorAndEnd(c, "Gateway returned nil response")
 	}
-	defer fwdResult.Response.Body.Close()
+	defer func() { _ = fwdResult.Response.Body.Close() }()
 
 	// Parse response
 	respBody, _ := io.ReadAll(io.LimitReader(fwdResult.Response.Body, 1024*1024))
@@ -2045,7 +2045,7 @@ func (s *AccountTestService) testGeminiEAccountConnection(c *gin.Context, accoun
 			} `json:"message"`
 		} `json:"choices"`
 	}
-	json.Unmarshal(nonStreamResp, &parsed)
+	_ = json.Unmarshal(nonStreamResp, &parsed)
 	result := "(empty)"
 	if len(parsed.Choices) > 0 {
 		result = parsed.Choices[0].Message.Content

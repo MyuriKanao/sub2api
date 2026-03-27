@@ -120,8 +120,8 @@ func stripXSSI(text string) string {
 func (s *GeminiEGatewayService) getXSRFToken(ctx context.Context, account *Account) (string, string, error) {
 	// Check cache
 	if cached, ok := s.xsrfCache.Load(account.ID); ok {
-		c := cached.(*geminiEXSRFCache)
-		if time.Now().Before(c.ExpiresAt) {
+		c, ok := cached.(*geminiEXSRFCache)
+		if ok && time.Now().Before(c.ExpiresAt) {
 			return c.XSRFToken, c.KeyID, nil
 		}
 		s.xsrfCache.Delete(account.ID)
@@ -225,7 +225,7 @@ func signJWT(keyID string, csesidx string, hmacSecret string) (string, error) {
 
 	// Sign with HMAC-SHA256
 	mac := hmac.New(sha256.New, []byte(hmacSecret))
-	mac.Write([]byte(signingInput))
+	_, _ = mac.Write([]byte(signingInput))
 	signature := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
 
 	return signingInput + "." + signature, nil
