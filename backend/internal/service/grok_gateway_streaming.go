@@ -199,7 +199,7 @@ func TransformGrokToOpenAINonStream(grokBody io.Reader, model string) ([]byte, e
 		if grokLine.Result.Response != nil && grokLine.Result.Response.ModelResponse != nil {
 			if msg := grokLine.Result.Response.ModelResponse.Message; msg != "" {
 				fullContent.Reset()
-				fullContent.WriteString(msg)
+				_, _ = fullContent.WriteString(msg)
 			}
 		}
 
@@ -213,7 +213,7 @@ func TransformGrokToOpenAINonStream(grokBody io.Reader, model string) ([]byte, e
 		}
 		if token != "" && fullContent.Len() == 0 {
 			// Only accumulate if we haven't seen a modelResponse yet
-			fullContent.WriteString(token)
+			_, _ = fullContent.WriteString(token)
 		}
 	}
 

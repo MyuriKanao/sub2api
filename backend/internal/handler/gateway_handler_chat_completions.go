@@ -214,12 +214,16 @@ func (h *GatewayHandler) ChatCompletions(c *gin.Context) {
 			if grokErr == nil && grokResult != nil && grokResult.Response != nil {
 				defer grokResult.Response.Body.Close()
 				isStream := true
-				var streamCheck struct{ Stream *bool `json:"stream"` }
+				var streamCheck struct {
+					Stream *bool `json:"stream"`
+				}
 				if json.Unmarshal(body, &streamCheck) == nil && streamCheck.Stream != nil {
 					isStream = *streamCheck.Stream
 				}
 				requestedModel := ""
-				var modelCheck struct{ Model string `json:"model"` }
+				var modelCheck struct {
+					Model string `json:"model"`
+				}
 				if json.Unmarshal(body, &modelCheck) == nil {
 					requestedModel = modelCheck.Model
 				}
@@ -254,12 +258,16 @@ func (h *GatewayHandler) ChatCompletions(c *gin.Context) {
 			if geminiEErr == nil && geminiEResult != nil && geminiEResult.Response != nil {
 				defer geminiEResult.Response.Body.Close()
 				isStream := true
-				var streamCheck struct{ Stream *bool `json:"stream"` }
+				var streamCheck struct {
+					Stream *bool `json:"stream"`
+				}
 				if json.Unmarshal(body, &streamCheck) == nil && streamCheck.Stream != nil {
 					isStream = *streamCheck.Stream
 				}
 				requestedModel := ""
-				var modelCheck struct{ Model string `json:"model"` }
+				var modelCheck struct {
+					Model string `json:"model"`
+				}
 				if json.Unmarshal(body, &modelCheck) == nil {
 					requestedModel = modelCheck.Model
 				}

@@ -3,7 +3,6 @@ package service
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -239,11 +238,6 @@ func extractContent(content interface{}) string {
 	}
 }
 
-// generateDynamicStatsigID generates a random x-statsig-id (mimics grok2api's dynamic mode).
-func generateDynamicStatsigID() string {
-	msg := fmt.Sprintf("e:TypeError: Cannot read properties of undefined (reading '%s')", uuid.New().String()[:8])
-	return base64.StdEncoding.EncodeToString([]byte(msg))
-}
 
 // Forward proxies an OpenAI-compatible request to Grok's web API.
 func (s *GrokGatewayService) Forward(

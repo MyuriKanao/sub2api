@@ -124,7 +124,7 @@ func TransformGeminiEStreamToOpenAISSE(geminiBody io.Reader, writer io.Writer, m
 					Delta: openAIDelta{Content: fmt.Sprintf("[Error %d: %s]", chunk.Error.Code, chunk.Error.Message)},
 				}},
 			}
-			geminiEWriteSSE(writer, errChunk)
+			_ = geminiEWriteSSE(writer, errChunk)
 			break
 		}
 
@@ -230,7 +230,7 @@ func TransformGeminiEToOpenAINonStream(geminiBody io.Reader, model string) ([]by
 			if content.Thought || content.Text == "" {
 				continue
 			}
-			fullContent.WriteString(content.Text)
+			_, _ = fullContent.WriteString(content.Text)
 		}
 	}
 

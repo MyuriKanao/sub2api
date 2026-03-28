@@ -161,7 +161,7 @@ func (s *GeminiEGatewayService) getXSRFToken(ctx context.Context, account *Accou
 	if err != nil {
 		return "", "", fmt.Errorf("getoxsrf request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	bodyBytes, err := io.ReadAll(io.LimitReader(resp.Body, 8192))
 	if err != nil {
@@ -301,8 +301,8 @@ func (s *GeminiEGatewayService) getWidgetToken(
 	// Check cache (uToken changes per response, but we can reuse for ~5 min)
 	cacheKey := fmt.Sprintf("utoken_%d", account.ID)
 	if cached, ok := s.xsrfCache.Load(cacheKey); ok {
-		c := cached.(*geminiEXSRFCache)
-		if time.Now().Before(c.ExpiresAt) {
+		c, ok := cached.(*geminiEXSRFCache)
+		if ok && time.Now().Before(c.ExpiresAt) {
 			return c.XSRFToken, nil // Reusing XSRFToken field for uToken
 		}
 		s.xsrfCache.Delete(cacheKey)
@@ -336,7 +336,7 @@ func (s *GeminiEGatewayService) getWidgetToken(
 	if err != nil {
 		return "", fmt.Errorf("completeQuery failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	bodyBytes, _ := io.ReadAll(io.LimitReader(resp.Body, 8192))
 	if resp.StatusCode != 200 {
@@ -426,7 +426,7 @@ func (s *GeminiEGatewayService) Forward(
 
 	if resp.StatusCode != 200 {
 		bodyBytes, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		resp.Body.Close()
+		_ = resp.Body.Close()
 
 		// Invalidate XSRF cache on auth errors
 		if resp.StatusCode == 401 || resp.StatusCode == 403 {
