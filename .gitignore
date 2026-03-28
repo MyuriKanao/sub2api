@@ -130,6 +130,13 @@ docs/*
 .serena/
 .codex/
 frontend/coverage/
+frontend/package-lock.json
 aicodex
 output/
+
+# 个人开发工具/配置
+backend/create_admin.go
+backend/reset_db.go
+backend/dev.ps1
+deploy/docker-compose.myuri.yml
 
