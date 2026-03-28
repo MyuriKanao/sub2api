@@ -961,19 +961,51 @@ func (h *GatewayHandler) Models(c *gin.Context) {
 		return
 	}
 
-	// Fallback to default models
-	if platform == "openai" {
+	// Fallback to default models by platform
+	switch platform {
+	case service.PlatformOpenAI:
 		c.JSON(http.StatusOK, gin.H{
 			"object": "list",
 			"data":   openai.DefaultModels,
 		})
-		return
+	case service.PlatformGrok:
+		c.JSON(http.StatusOK, gin.H{
+			"object": "list",
+			"data":   defaultGrokModels,
+		})
+	case service.PlatformGeminiE:
+		c.JSON(http.StatusOK, gin.H{
+			"object": "list",
+			"data":   defaultGeminiEModels,
+		})
+	default:
+		c.JSON(http.StatusOK, gin.H{
+			"object": "list",
+			"data":   claude.DefaultModels,
+		})
 	}
+}
 
-	c.JSON(http.StatusOK, gin.H{
-		"object": "list",
-		"data":   claude.DefaultModels,
-	})
+// defaultGrokModels is the fallback model list for Grok platform groups.
+var defaultGrokModels = []claude.Model{
+	{ID: "grok-3", Type: "model", DisplayName: "Grok 3", CreatedAt: "2025-02-01T00:00:00Z"},
+	{ID: "grok-3-auto", Type: "model", DisplayName: "Grok 3 Auto", CreatedAt: "2025-02-01T00:00:00Z"},
+	{ID: "grok-3-fast", Type: "model", DisplayName: "Grok 3 Fast", CreatedAt: "2025-02-01T00:00:00Z"},
+	{ID: "grok-4", Type: "model", DisplayName: "Grok 4", CreatedAt: "2026-01-01T00:00:00Z"},
+	{ID: "grok-4-mini-thinking", Type: "model", DisplayName: "Grok 4 Mini Thinking", CreatedAt: "2026-01-01T00:00:00Z"},
+	{ID: "grok-4-mini-thinking-tahoe", Type: "model", DisplayName: "Grok 4 Mini Thinking Tahoe", CreatedAt: "2026-01-01T00:00:00Z"},
+}
+
+// defaultGeminiEModels is the fallback model list for Gemini-E platform groups.
+var defaultGeminiEModels = []claude.Model{
+	{ID: "gemini-2.0-flash", Type: "model", DisplayName: "Gemini 2.0 Flash", CreatedAt: "2025-01-01T00:00:00Z"},
+	{ID: "gemini-2.5-flash", Type: "model", DisplayName: "Gemini 2.5 Flash", CreatedAt: "2025-06-01T00:00:00Z"},
+	{ID: "gemini-2.5-flash-image", Type: "model", DisplayName: "Gemini 2.5 Flash Image", CreatedAt: "2025-06-01T00:00:00Z"},
+	{ID: "gemini-2.5-pro", Type: "model", DisplayName: "Gemini 2.5 Pro", CreatedAt: "2025-06-01T00:00:00Z"},
+	{ID: "gemini-3-flash-preview", Type: "model", DisplayName: "Gemini 3 Flash Preview", CreatedAt: "2026-01-01T00:00:00Z"},
+	{ID: "gemini-3-pro-preview", Type: "model", DisplayName: "Gemini 3 Pro Preview", CreatedAt: "2026-01-01T00:00:00Z"},
+	{ID: "gemini-3.1-pro-preview", Type: "model", DisplayName: "Gemini 3.1 Pro Preview", CreatedAt: "2026-03-01T00:00:00Z"},
+	{ID: "gemini-3.1-flash-image", Type: "model", DisplayName: "Gemini 3.1 Flash Image", CreatedAt: "2026-03-01T00:00:00Z"},
 }
 
 // AntigravityModels 返回 Antigravity 支持的全部模型
