@@ -140,3 +140,6 @@ backend/reset_db.go
 backend/dev.ps1
 deploy/docker-compose.myuri.yml
 
+# 项目上下文（仅本地使用）
+.context/
+
