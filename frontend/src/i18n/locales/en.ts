@@ -1442,6 +1442,11 @@ export default {
         admin: 'Admin',
         user: 'User'
       },
+      form: {
+        roleLabel: 'Role',
+        selectRole: 'Select Role'
+      },
+      cannotChangeOwnRole: 'You cannot change your own role',
       // Settings Dropdowns
       filterSettings: 'Filter Settings',
       columnSettings: 'Column Settings',

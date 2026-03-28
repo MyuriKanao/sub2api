@@ -7,6 +7,7 @@ import (
 
 	"github.com/Wei-Shaw/sub2api/internal/handler/dto"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
+	"github.com/Wei-Shaw/sub2api/internal/server/middleware"
 	"github.com/Wei-Shaw/sub2api/internal/service"
 
 	"github.com/gin-gonic/gin"
@@ -38,6 +39,7 @@ type CreateUserRequest struct {
 	Password              string  `json:"password" binding:"required,min=6"`
 	Username              string  `json:"username"`
 	Notes                 string  `json:"notes"`
+	Role                  string  `json:"role" binding:"omitempty,oneof=admin user"`
 	Balance               float64 `json:"balance"`
 	Concurrency           int     `json:"concurrency"`
 	AllowedGroups         []int64 `json:"allowed_groups"`
@@ -51,6 +53,7 @@ type UpdateUserRequest struct {
 	Password      string   `json:"password" binding:"omitempty,min=6"`
 	Username      *string  `json:"username"`
 	Notes         *string  `json:"notes"`
+	Role          *string  `json:"role" binding:"omitempty,oneof=admin user"`
 	Balance       *float64 `json:"balance"`
 	Concurrency   *int     `json:"concurrency"`
 	Status        string   `json:"status" binding:"omitempty,oneof=active disabled"`
@@ -186,6 +189,7 @@ func (h *UserHandler) Create(c *gin.Context) {
 		Password:              req.Password,
 		Username:              req.Username,
 		Notes:                 req.Notes,
+		Role:                  req.Role,
 		Balance:               req.Balance,
 		Concurrency:           req.Concurrency,
 		AllowedGroups:         req.AllowedGroups,
@@ -214,18 +218,26 @@ func (h *UserHandler) Update(c *gin.Context) {
 		return
 	}
 
+	// Get current admin user ID for self-demotion check
+	var callerUserID int64
+	if subject, ok := middleware.GetAuthSubjectFromContext(c); ok {
+		callerUserID = subject.UserID
+	}
+
 	// 使用指针类型直接传递，nil 表示未提供该字段
 	user, err := h.adminService.UpdateUser(c.Request.Context(), userID, &service.UpdateUserInput{
 		Email:                 req.Email,
 		Password:              req.Password,
 		Username:              req.Username,
 		Notes:                 req.Notes,
+		Role:                  req.Role,
 		Balance:               req.Balance,
 		Concurrency:           req.Concurrency,
 		Status:                req.Status,
 		AllowedGroups:         req.AllowedGroups,
 		GroupRates:            req.GroupRates,
 		SoraStorageQuotaBytes: req.SoraStorageQuotaBytes,
+		CallerUserID:          callerUserID,
 	})
 	if err != nil {
 		response.ErrorFrom(c, err)

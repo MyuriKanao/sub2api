@@ -1417,6 +1417,7 @@ export default {
         statusLabel: '状态',
         selectStatus: '选择状态'
       },
+      cannotChangeOwnRole: '不能修改自己的角色',
       adjustBalance: '调整余额',
       adjustConcurrency: '调整并发数',
       adjustmentAmount: '调整金额',

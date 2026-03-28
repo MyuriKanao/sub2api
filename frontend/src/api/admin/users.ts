@@ -73,6 +73,7 @@ export async function getById(id: number): Promise<AdminUser> {
 export async function create(userData: {
   email: string
   password: string
+  role?: 'admin' | 'user'
   balance?: number
   concurrency?: number
   allowed_groups?: number[] | null

@@ -107,6 +107,7 @@ type CreateUserInput struct {
 	Password              string
 	Username              string
 	Notes                 string
+	Role                  string
 	Balance               float64
 	Concurrency           int
 	AllowedGroups         []int64
@@ -118,6 +119,7 @@ type UpdateUserInput struct {
 	Password      string
 	Username      *string
 	Notes         *string
+	Role          *string  // 使用指针区分"未提供"和"设置角色"
 	Balance       *float64 // 使用指针区分"未提供"和"设置为0"
 	Concurrency   *int     // 使用指针区分"未提供"和"设置为0"
 	Status        string
@@ -126,6 +128,8 @@ type UpdateUserInput struct {
 	// map[groupID]*rate，nil 表示删除该分组的专属倍率
 	GroupRates            map[int64]*float64
 	SoraStorageQuotaBytes *int64
+	// CallerUserID is the ID of the admin performing the update (for self-demotion check)
+	CallerUserID int64
 }
 
 type CreateGroupInput struct {
@@ -568,11 +572,15 @@ func (s *adminServiceImpl) GetUser(ctx context.Context, id int64) (*User, error)
 }
 
 func (s *adminServiceImpl) CreateUser(ctx context.Context, input *CreateUserInput) (*User, error) {
+	role := input.Role
+	if role != RoleAdmin && role != RoleUser {
+		role = RoleUser
+	}
 	user := &User{
 		Email:                 input.Email,
 		Username:              input.Username,
 		Notes:                 input.Notes,
-		Role:                  RoleUser, // Always create as regular user, never admin
+		Role:                  role,
 		Balance:               input.Balance,
 		Concurrency:           input.Concurrency,
 		Status:                StatusActive,
@@ -635,6 +643,17 @@ func (s *adminServiceImpl) UpdateUser(ctx context.Context, id int64, input *Upda
 	}
 	if input.Notes != nil {
 		user.Notes = *input.Notes
+	}
+
+	if input.Role != nil {
+		newRole := *input.Role
+		if newRole == RoleAdmin || newRole == RoleUser {
+			// Prevent admin from demoting themselves
+			if user.Role == RoleAdmin && newRole == RoleUser && input.CallerUserID == user.ID {
+				return nil, errors.New("cannot demote yourself from admin role")
+			}
+			user.Role = newRole
+		}
 	}
 
 	if input.Status != "" {
