@@ -1,6 +1,8 @@
 name: Docker Build & Push
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       tag:
@@ -34,7 +36,7 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/sub2api:${{ inputs.tag }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/sub2api:${{ inputs.tag || 'latest' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
